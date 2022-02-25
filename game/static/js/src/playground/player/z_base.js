@@ -20,6 +20,7 @@ class Player extends AcGameObject {
         //用于浮点数运算
         this.eps = 0.1;
         this.friction = 0.9;//伤害迫使位移速度 的衰减系数
+        this.spent_time = 0;
     }
 
     start() {
@@ -72,7 +73,7 @@ class Player extends AcGameObject {
 
 
     get_dist(x1, y1, x2, y2) {
-        let dx = x2 - x1;
+        let dx = x1 - x2;
         let dy = y2 - y1;
         return Math.sqrt(dx * dx + dy * dy);
     }
@@ -86,6 +87,20 @@ class Player extends AcGameObject {
 
     is_attacked(angle, damage) {
         this.radius -= damage;
+
+        //粒子小球效果
+        for (let i = 0; i < 15 + Math.random() * 10; i ++) {
+            let x = this.x;
+            let y = this.y;
+            let radius = this.radius * Math.random() * 0.1;
+            let angle = Math.PI * Math.random() * 2;
+            let vx = Math.cos(angle);
+            let vy = Math.sin(angle);
+            let color = this.color;
+            let speed = this.speed * 10;
+            let move_length = this.radius * Math.random() * 10;
+            new Particle(this.playground, x, y, radius, vx, vy, color, speed, move_length);
+        }
         if(this.radius < 10) {//当玩家半径小于10像素时，玩家死亡
             this.destroy();
             return false;
@@ -98,12 +113,22 @@ class Player extends AcGameObject {
     }
 
     update() {
+        
+        this.render();//render()函数必须放在update()内第一个执行，若将render放在if-else之后，更新每一帧时无法及时的将render()渲染出来，会使人物在受到攻击进行攻击判定时处于“隐身”状态。
+
+        this.spent_time += this.timedelta / 1000;//更新bot开局技能冷却时间
+        if (!this.is_me && this.spent_time > 4 && Math.random() * 300 < 1) {//当五秒冷却时间过去,bot开始攻击
+            let player = this.playground.players[0];
+            this.shoot_fireball(player.x, player.y);
+        }
+
         if (this.damage_speed > this.eps) {//若此时仍处于被击退状态中
             this.vx = this.vy = 0;
             this.move_length = 0;
             this.x += this.damage_speed * this.damage_vx * this.timedelta/1000;
             this.y += this.damage_speed * this.damage_vy * this.timedelta/1000;
             this.damage_speed *= this.friction;//击退速度*摩擦系数，达到击退速度逐渐衰减的效果
+
         }
         else {
             if (this.move_length < this.eps) {
@@ -122,7 +147,7 @@ class Player extends AcGameObject {
                 this.move_length -= moved;
             }
 
-            this.render();
+
         }
     }
     render() {  //渲染一个圆
@@ -132,8 +157,8 @@ class Player extends AcGameObject {
         this.ctx.fill();
     }
     on_destroy() {
-       
-        
+
+
     }
 }
 
