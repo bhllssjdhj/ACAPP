@@ -9,8 +9,8 @@
 .ac_game_menu_field {
     width : 20vh;
     position : relative;
-    top : 40vh;
-    left : 20vh;
+    top : 50%;
+    left : 50%;
 }
 
 .ac_game_menu_field_item {
