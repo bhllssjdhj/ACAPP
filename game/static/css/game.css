@@ -1,3 +1,122 @@
+.ac_game_settings {
+    width : 100%;
+    height : 100%;
+    background-image : url("/static/image/menu/zhizi.jpg");
+    background-size : 100% 100%;
+    user-select : none;
+
+}
+
+.ac_game_settings_login {
+    height: 42vh;
+    width: 20vw;
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.7);
+    border-radius: 5px;
+}
+
+
+.ac_game_settings_title {
+    color: white;
+    font-size: 3vh;
+    text-align: center;
+    padding-top: 2vh;
+    margin-bottom: 2vh;
+}
+
+.ac_game_settings_username {
+    display: block;
+    height: 7vh;
+}
+
+.ac_game_settings_password {
+    display: block;
+    height: 7vh;
+}
+
+.ac_game_settings_submit {
+    display: block;
+    height: 7vh;
+}
+
+.ac_game_settings_acwing {
+    display: block;
+    height: 7vh;
+}
+
+.ac_game_settings_item {
+    width: 100%;
+    height: 100%;
+}
+
+.ac_game_settings_item > input {
+    width: 90%;
+    line-height: 3vh;
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.ac_game_settings_item > button {
+    color: white;
+    width: 90%;
+    line-height: 3vh;
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #4CAF50;
+    border-radius: 5px;
+}
+
+.ac_game_settings_error_message {
+    color: red;
+    font-size: 0.8vh;
+    display: inline;
+    float: left;
+    padding-left: 1vw;
+}
+
+.ac_game_settings_option {
+    color: white;
+    font-size: 2vh;
+    display: inline;
+    float: right;
+    padding-right: 1vw;
+    cursor: pointer;
+}
+
+.ac_game_settings_acwing > img {
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    display: block;
+}
+
+.ac_game_settings_acwing > div {
+    color: white;
+    font-size: 1.5vh;
+    text-align: center;
+    display: block;
+}
+
+.ac_game_settings_register {
+    height: 49vh;
+    width: 20vw;
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.7);
+    border-radius: 5px;
+}
+
 .ac_game_menu {
     width : 100%;
     height : 100%;

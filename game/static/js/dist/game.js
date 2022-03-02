@@ -18,40 +18,42 @@ class AcGameMenu {
     </div>
 </div>
 `);
-                this.root.$ac_game.append(this.$menu);
-                this.$single_mode = this.$menu.find('.ac_game_menu_field_item_single_mode');
-                this.$multi_mode = this.$menu.find('.ac_game_menu_field_item_multi_mode');
-                this.$settings = this.$menu.find('.ac_game_menu_field_item_settings');
 
-                this.start();
-            }
+        this.$menu.hide();
+        this.root.$ac_game.append(this.$menu);
+        this.$single_mode = this.$menu.find('.ac_game_menu_field_item_single_mode');
+        this.$multi_mode = this.$menu.find('.ac_game_menu_field_item_multi_mode');
+        this.$settings = this.$menu.find('.ac_game_menu_field_item_settings');
 
-        start() {
-                    this.add_listening_events();
-                }
+        this.start();
+    }
+
+    start() {
+        this.add_listening_events();
+    }
 
 
-        add_listening_events() {
-                    let outer = this;
-                    this.$single_mode.click(function(){
-                        outer.hide();
-                        outer.root.playground.show();
-                    });
-                    this.$multi_mode.click(function(){
-                    
-                    });
-                    this.$settings.click(function(){
-                    
-                    });
-                }
+    add_listening_events() {
+        let outer = this;
+        this.$single_mode.click(function(){
+            outer.hide();
+            outer.root.playground.show();
+        });
+        this.$multi_mode.click(function(){
 
-        show() {  // 显示menu界面
-                    this.$menu.show();
-                }
+        });
+        this.$settings.click(function(){
 
-        hide() {  // 关闭menu界面
-                    this.$menu.hide();
-                }
+        });
+    }
+
+    show() {  // 显示menu界面
+        this.$menu.show();
+    }
+
+    hide() {  // 关闭menu界面
+        this.$menu.hide();
+    }
 }
 
 
@@ -196,6 +198,10 @@ class Player extends AcGameObject {
         this.eps = 0.1;
         this.friction = 0.9;//伤害迫使位移速度 的衰减系数
         this.spent_time = 0;
+        if (this.is_me){
+            this.img = new Image();//创建用户头像
+            this.img.src = this.playground.root.settings.photo;
+        }
     }
 
     start() {
@@ -292,7 +298,7 @@ class Player extends AcGameObject {
     }
 
     update() {
-        
+
         this.render();//render()函数必须放在update()内第一个执行，若将render放在if-else之后，更新每一帧时无法及时的将render()渲染出来，会使人物在受到攻击进行攻击判定时处于“隐身”状态。
 
         this.spent_time += this.timedelta / 1000;//更新bot开局技能冷却时间
@@ -330,10 +336,21 @@ class Player extends AcGameObject {
         }
     }
     render() {  //渲染一个圆
-        this.ctx.beginPath();
-        this.ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI, false);
-        this.ctx.fillStyle = this.color;
-        this.ctx.fill();
+        if (this.is_me) {
+            this.ctx.save();
+            this.ctx.beginPath();
+            this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+            this.ctx.stroke();
+            this.ctx.clip();
+            this.ctx.drawImage(this.img, this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2); 
+            this.ctx.restore();
+        }
+        else {
+            this.ctx.beginPath();
+            this.ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI, false);
+            this.ctx.fillStyle = this.color;
+            this.ctx.fill();
+        }
     }
     on_destroy() {
 
@@ -451,10 +468,189 @@ class AcGamePlayground {
 
 
 }
+class Settings {
+    constructor(root) {
+        this.root = root;
+        this.platform = "WEB";
+        if(this.root.AcWingOS == "ACAPP") this.platform = "ACAPP";
+        this.username = "";
+        this.photo = "";
+
+        this.$settings = $(`
+<div class="ac_game_settings">
+    <div class="ac_game_settings_login">
+        <div class="ac_game_settings_title">
+            登录
+        </div>
+        <div class="ac_game_settings_username">
+            <div class="ac_game_settings_item">
+                <input type="text" placeholder="用户名">
+            </div>
+        </div>
+        <div class="ac_game_settings_password">
+            <div class="ac_game_settings_item">
+                
+                <input type="password" placeholder="密码">
+              
+            </div>
+        </div>
+        <div class="ac_game_settings_submit">
+            <div class="ac_game_settings_item">
+                <button>登录</button>
+            </div>
+        </div>
+        <div class="ac_game_settings_error_message">
+        </div>
+        <div class="ac_game_settings_option">
+            注册
+        </div>
+        <br>
+        <div class="ac_game_settings_acwing">
+            <img width="30" src="https://app165.acapp.acwing.com.cn/static/image/settings/acwing_logo.png">
+            <br>
+            <div>
+                AcWing一键登录
+            </div>
+        </div>
+    </div>
+    <div class="ac_game_settings_register">
+        <div class="ac_game_settings_title">
+            注册
+        </div>
+        <div class="ac_game_settings_username">
+            <div class="ac_game_settings_item">
+                <input type="text" placeholder="用户名">
+            </div>
+        </div>
+        <div class="ac_game_settings_password ac_game_settings_password_first">
+            <div class="ac_game_settings_item">
+               
+                <input type="password" placeholder="密码">
+           
+            </div>
+        </div>
+        <div class="ac_game_settings_password ac_game_settings_password_second">
+            <div class="ac_game_settings_item">
+              
+                <input type="password" placeholder="确认密码">
+               
+            </div>
+        </div>
+        <div class="ac_game_settings_submit">
+            <div class="ac_game_settings_item">
+                <button>注册</button>
+            </div>
+        </div>
+        <div class="ac_game_settings_error_message">
+        </div>
+        <div class="ac_game_settings_option">
+            登录
+        </div>
+        <br>
+        <div class="ac_game_settings_acwing">
+            <img width="30" src="https://app165.acapp.acwing.com.cn/static/image/settings/acwing_logo.png">
+            <br>
+            <div>
+                AcWing一键登录
+            </div>
+        </div>
+    </div>
+</div>
+`);
+        
+        this.$login = this.$settings.find(".ac_game_settings_login");
+        this.$login_username = this.$login.find(".ac_game_settings_username input");
+        this.$login_password = this.$login.find(".ac_game_settings_password input");
+        this.$login_submit = this.$login.find(".ac_game_settings_submit button");
+        this.$login_error_message = this.$login.find(".ac_game_settings_error_message");
+        this.$login_register = this.$login.find(".ac_game_settings_option");
+
+        this.$login.hide();
+
+        this.$register = this.$settings.find(".ac_game_settings_register");
+        this.$register_username = this.$register.find(".ac_game_settings_username input");
+        this.$register_password = this.$register.find(".ac_game_settings_password_first input");
+        this.$register_password_confirm = this.$register.find(".ac_game_settings_password_second input");
+        this.$register_submit = this.$register.find(".ac_game_settings_submit button");
+        this.$register_error_message = this.$register.find(".ac_game_settings_error_message");
+        this.$register_login = this.$register.find(".ac_game_settings_option");
+
+        this.$register.hide();
+
+        this.root.$ac_game.append(this.$settings);
+        this.start();
+    }
+
+    start() {
+        this.getinfo();
+        this.add_listening_events();
+    }
+
+    add_listening_events() {
+        this.add_listening_events_login();
+        this.add_listening_events_register();
+    }
+
+    add_listening_events_login(){
+        let outer = this;
+        this.$login_register.click(function(){
+            outer.register();
+        });
+    }
+    add_listening_events_register(){
+        let outer = this;
+        this.$register_login.click(function(){
+            outer.login();
+        })
+    }
+
+    login(){//打开登录界面
+        this.$login.show();
+        this.$register.hide();
+    }
+    register(){//打开注册界面
+        this.$register.show();
+        this.$login.hide();
+    }
+
+    getinfo() {
+        let outer = this;
+        $.ajax({
+            url : "https://app1660.acapp.acwing.com.cn/settings/getinfo/",
+            type : "GET",
+            data : {
+                platform : outer.platform,
+            },
+            success : function(resp) {
+                console.log(resp);
+                if (resp.result === "success") {
+                    outer.username = resp.username;
+                    outer.photo = resp.photo;
+                    outer.hide();
+                    outer.root.menu.show();
+                }
+                else {
+                    outer.login();
+                }
+            }
+        });
+    }
+    hide() {
+        this.$settings.hide();
+    }
+    show() {
+        this.$settings.show();
+    }
+
+
+
+}
 export class AcGame {
-    constructor(id) {
+    constructor(id, AcWingOS) {
         this.id = id;
         this.$ac_game = $('#' + id);
+        this.AcWingOS = AcWingOS;
+        this.settings = new Settings(this);
         this.menu = new AcGameMenu(this);
         this.playground = new AcGamePlayground(this);
         

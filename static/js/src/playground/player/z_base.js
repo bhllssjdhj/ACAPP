@@ -21,6 +21,10 @@ class Player extends AcGameObject {
         this.eps = 0.1;
         this.friction = 0.9;//伤害迫使位移速度 的衰减系数
         this.spent_time = 0;
+        if (this.is_me){
+            this.img = new Image();//创建用户头像
+            this.img.src = this.playground.root.settings.photo;
+        }
     }
 
     start() {
@@ -117,7 +121,7 @@ class Player extends AcGameObject {
     }
 
     update() {
-        
+
         this.render();//render()函数必须放在update()内第一个执行，若将render放在if-else之后，更新每一帧时无法及时的将render()渲染出来，会使人物在受到攻击进行攻击判定时处于“隐身”状态。
 
         this.spent_time += this.timedelta / 1000;//更新bot开局技能冷却时间
@@ -155,10 +159,21 @@ class Player extends AcGameObject {
         }
     }
     render() {  //渲染一个圆
-        this.ctx.beginPath();
-        this.ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI, false);
-        this.ctx.fillStyle = this.color;
-        this.ctx.fill();
+        if (this.is_me) {
+            this.ctx.save();
+            this.ctx.beginPath();
+            this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+            this.ctx.stroke();
+            this.ctx.clip();
+            this.ctx.drawImage(this.img, this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2); 
+            this.ctx.restore();
+        }
+        else {
+            this.ctx.beginPath();
+            this.ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI, false);
+            this.ctx.fillStyle = this.color;
+            this.ctx.fill();
+        }
     }
     on_destroy() {
 
