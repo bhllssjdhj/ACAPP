@@ -92,7 +92,7 @@ class Settings {
         this.$login_username = this.$login.find(".ac_game_settings_username input");
         this.$login_password = this.$login.find(".ac_game_settings_password input");
         this.$login_submit = this.$login.find(".ac_game_settings_submit button");
-        this.$login_error_message = this.$login.find(".ac_game_settings_error_message");
+        this.$login_error_message = this.$login.find(".ac_game_settings_error_message");//显示错误信息
         this.$login_register = this.$login.find(".ac_game_settings_option");
 
         this.$login.hide();
@@ -102,7 +102,7 @@ class Settings {
         this.$register_password = this.$register.find(".ac_game_settings_password_first input");
         this.$register_password_confirm = this.$register.find(".ac_game_settings_password_second input");
         this.$register_submit = this.$register.find(".ac_game_settings_submit button");
-        this.$register_error_message = this.$register.find(".ac_game_settings_error_message");
+        this.$register_error_message = this.$register.find(".ac_game_settings_error_message");//显示错误信息
         this.$register_login = this.$register.find(".ac_game_settings_option");
 
         this.$register.hide();
@@ -119,19 +119,92 @@ class Settings {
     add_listening_events() {
         this.add_listening_events_login();
         this.add_listening_events_register();
-    }
+    }//显示错误信息
 
     add_listening_events_login(){
         let outer = this;
         this.$login_register.click(function(){
             outer.register();
         });
+        this.$login_submit.click(function() {//实现远程登录
+            outer.login_on_remote();
+        });
     }
     add_listening_events_register(){
         let outer = this;
         this.$register_login.click(function(){
             outer.login();
-        })
+        });
+        this.$register_submit.click(function() {//监听点击按钮,若不添加则点击注册按钮无反应
+            outer.register_on_remote();
+        });
+    }
+
+    login_on_remote() {//远程服务器登录
+        let outer = this;
+        let username = this.$login_username.val();
+        let password = this.$login_password.val();
+        this.$login_error_message.empty();//清空消息提示：登陆失败
+        $.ajax({
+            url : "https://app1660.acapp.acwing.com.cn/settings/login/",
+            type : "GET",
+            data : {//向服务器后端传送数据
+                username : username,
+                password : password,
+            },
+            success : function(resp) {//resp即是我们在view函数中返回的字典
+                //console.log(resp);
+                if (resp.result === "success") {//回调函数
+                    location.reload();//用户名密码正确，刷新页面，此时以保存在cookie中，故刷新后我们直接进入了菜单界面
+                }
+                else {
+                    outer.$login_error_message.html(resp.result);
+                }
+            }
+        });
+    }
+
+    logout_on_remote() {//远程退出登录
+        if (this.platform === "ACAPP") return false;
+
+        $.ajax({
+            url : "https://app1660.acapp.acwing.com.cn/settings/logout/",
+            type : "GET",
+            success : function(resp) {
+               // console.log(resp);
+                if (resp.result === "success")//是否成功退出
+                    location.reload();
+            }
+        });
+    }
+
+    register_on_remote(){
+        let outer = this;
+        let username = this.$register_username.val();
+        let password = this.$register_password.val();
+        let password_confirm = this.$register_password_confirm.val();
+        this.$register_error_message.empty();
+
+        $.ajax({
+            url:"https://app1660.acapp.acwing.com.cn/settings/register/",
+            type : "GET",
+            data : {
+                username: username,
+                password: password,
+                password_confirm: password_confirm,
+
+            },
+            success: function(resp){
+                console.log(resp);
+                if (resp.result === "success") {
+                    location.reload();//登录成功直接刷新
+                }
+                else {
+                    outer.$register_error_message.html(resp.result);
+                }
+            }
+
+        });
     }
 
     login(){//打开登录界面
