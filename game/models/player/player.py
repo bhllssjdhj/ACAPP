@@ -8,7 +8,7 @@ class Player(models.Model): # Player 类继承自 Model 类
     # （感觉就是外键的意思）
     photo = models.URLField(max_length=256, blank=True)
     # 用于存储用户的头像的url
-    openid = models.CharField(default = "", max_length = 256, blank = True, null = True)#实现网页后台的openid,与tocken一起用来向网站请求用户数据
+    openid = models.CharField(default = "", max_length = 256, blank = True, null = True)#每个用户独一无二的id,与tocken一起用来向网站请求用户数据
     # 指定每个player数据展示在前台的数据
     def __str__(self):
         return str(self.user)    # 展示用户的用户名
