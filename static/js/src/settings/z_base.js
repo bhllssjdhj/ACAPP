@@ -112,8 +112,11 @@ class Settings {
     }
 
     start() {
-        this.getinfo();
-        this.add_listening_events();
+        if (this.platform === "ACAPP") this.getinfo_acapp();
+        else {
+            this.getinfo_web();
+            this.add_listening_events();
+        }
     }
 
     add_listening_events() {
@@ -136,10 +139,16 @@ class Settings {
     }
     add_listening_events_register(){
         let outer = this;
-        this.$register_login.click(function(){
+        this.$register_login.click(function(){//点击登录按钮,回到登陆界面
             outer.login();
         })
+        this.$register_submit.click(function() {//点击注册按钮,调用注册函数
+            outer.register_on_remote();
+        });
     }
+
+
+
 
     login_on_remote() {//远程服务器登录
         let outer = this;
@@ -160,6 +169,30 @@ class Settings {
                 }
                 else {
                     outer.$login_error_message.html(resp.result);
+                }
+            }
+        });
+    }
+    register_on_remote() {//实现远程注册
+        let outer = this;
+        let username = this.$register_username.val();
+        let password = this.$register_password.val();
+        let password_confirm = this.$register_password_confirm.val();
+        this.$register_error_message.empty();
+
+        $.ajax({
+            url: "https://app1660.acapp.acwing.com.cn/settings/register/",
+            type: "GET",
+            data: {
+                username: username,
+                password: password,
+                password_confirm: password_confirm,
+            },
+            success: function(resp) {
+                if (resp.result === "success") {
+                    location.reload();  // 刷新页面
+                } else {
+                    outer.$register_error_message.html(resp.result);
                 }
             }
         });
@@ -202,8 +235,20 @@ class Settings {
         this.$register.show();
         this.$login.hide();
     }
+    getinfo_acapp() {
+        let outer = this;
+        $.ajax({
+            url: "https://app1660.acapp.acwing.com.cn/settings/acwing/acapp/apply_code/",
+            type: "GET",
+            success: function(resp) {
+                if (resp.result === "success") {
+                    outer.acapp_login(resp.appid, resp.redirect_uri, resp.scope, resp.state);
+                }
+            }
+        });
+    }
 
-    getinfo() {
+    getinfo_web() {
         let outer = this;
         $.ajax({
             url : "https://app1660.acapp.acwing.com.cn/settings/getinfo/",
