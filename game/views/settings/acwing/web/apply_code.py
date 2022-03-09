@@ -17,9 +17,10 @@ def apply_code(request) :#向acwing申请授权登录，并指明自己来路
     state = get_state()#拿到一个随机值
 
     cache.set(state, True, 7200) #将随机state值传入内存数据库，有效期两小时
+
     apply_code_url = "https://www.acwing.com/third_party/api/oauth2/web/authorize/"
 
     return JsonResponse({#向前端返回
-        "result" : "success",
-        "apply_code_url" : apply_code_url + "?appid=%s&redirect_uri=%s&scope=%s&state=%s" % (appid, redirect_uri, scope, state),
+        'result': "success",
+        'apply_code_url' : apply_code_url + "?appid=%s&redirect_uri=%s&scope=%s&state=%s" % (appid, redirect_uri, scope, state)
         })

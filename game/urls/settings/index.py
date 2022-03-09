@@ -8,8 +8,8 @@ from game.views.settings.register import register
 urlpatterns = [
     path("getinfo/", getinfo, name="settings_getinfo"),
     path("login/", signin, name="settings_login"),
-    path("logout/", signout, name="settigns_logout"),
+    path("logout/", signout, name="settings_logout"),
     path("register/", register, name="settings_register"),
-    path("acwing/", include("game.urls.settings.acwing.index")),#从acwing文件夹中导入路由
-    ]
+    path("acwing/", include("game.urls.settings.acwing.index")),
+]
 

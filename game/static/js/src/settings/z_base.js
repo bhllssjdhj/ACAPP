@@ -112,7 +112,9 @@ class Settings {
     }
 
     start() {
-        if (this.platform === "ACAPP") this.getinfo_acapp();
+        if (this.platform === "ACAPP"){ 
+            this.getinfo_acapp();
+        }
         else {
             this.getinfo_web();
             this.add_listening_events();
@@ -125,7 +127,7 @@ class Settings {
         this.add_listening_events_register();
         this.$acwing_login.click(function(){
             outer.acwing_login();
-        })
+        });
     }
 
     add_listening_events_login(){
@@ -223,7 +225,7 @@ class Settings {
                     window.location.replace(resp.apply_code_url);
                 }
             }
-        })
+        });
 
     }
 
@@ -257,7 +259,7 @@ class Settings {
                 platform : outer.platform,
             },
             success : function(resp) {
-                console.log(resp);
+               // console.log(resp);
                 if (resp.result === "success") {
                     outer.username = resp.username;
                     outer.photo = resp.photo;
