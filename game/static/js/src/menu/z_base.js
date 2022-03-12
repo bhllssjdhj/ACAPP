@@ -37,10 +37,11 @@ class AcGameMenu {
         let outer = this;
         this.$single_mode.click(function(){
             outer.hide();
-            outer.root.playground.show();
+            outer.root.playground.show("single mode");
         });
         this.$multi_mode.click(function(){
-
+            outer.hide();
+            outer.root.playground.show("multi mode");
         });
         this.$settings.click(function(){//暂时当做我们的登出按钮
             outer.root.settings.logout_on_remote();

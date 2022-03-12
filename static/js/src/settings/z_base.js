@@ -229,6 +229,19 @@ class Settings {
 
     }
 
+    acapp_login() {
+        let outer = this
+        this.root.AcWingOS.api.oauth2.authorize(appid,redirect_uri, scope, state, function(resp){
+            if (resp.result === "success") {
+                outer.username = resp.username;
+                outer.photo = resp.photo;
+                outer.hide();
+                outer.root.menu.show();
+
+            }
+        });
+    }
+
     login(){//打开登录界面
         this.$login.show();
         this.$register.hide();
@@ -259,7 +272,7 @@ class Settings {
                 platform : outer.platform,
             },
             success : function(resp) {
-               // console.log(resp);
+                // console.log(resp);
                 if (resp.result === "success") {
                     outer.username = resp.username;
                     outer.photo = resp.photo;

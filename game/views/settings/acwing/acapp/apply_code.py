@@ -12,18 +12,18 @@ def get_state():
 
 
 def apply_code(request):
-    appid = "165"
-    redirect_uri = quote("https://app165.acapp.acwing.com.cn/settings/acwing/acapp/receive_code/")
+    appid = "1660"
+    redirect_uri = quote("https://app1660.acapp.acwing.com.cn/settings/acwing/web/receive_code/")
     scope = "userinfo"
     state = get_state()
 
     cache.set(state, True, 7200)   # 有效期2小时
 
-    return JsonResponse({
+    return JsonResponse({#return函数与web不同，这里返回的是四个参数
         'result': "success",
         'appid': appid,
-        'redirect_uri': redirect_uri,
+        'redirect_uri': redirect_uri,#接收授权码的地址
         'scope': scope,
-        'state': state,
+        'state': state,#确保申请和回调的一致性
     })
 
