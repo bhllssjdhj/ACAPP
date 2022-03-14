@@ -50,10 +50,12 @@ class AcGamePlayground {
         this.game_map = new GameMap(this);
 
         this.players = [];  // 存放当前游戏中的所有玩家
-        this.players.push(new Player(this, this.width / 2 / this.scale, 0.5, 0.05, "white", 0.15, true));
+        this.players.push(new Player(this, this.width/2/this.scale,0.5,0.05,"white",0.15, "me", this.root.settings.username, this.root.settings.photo));
+
+
         if (mode === "single mode") {
             for (let i = 0; i < 5; i ++) {//创建人机
-                this.players.push(new Player(this, this.width / 2 / this.scale, 0.5, 0.05, this.get_random_color(), 0.15,false));
+                this.players.push(new Player(this, this.width / 2 / this.scale, 0.5, 0.05, this.get_random_color(), 0.15, "robot"));
             }
         } else if (mode === "multi mode") {
             

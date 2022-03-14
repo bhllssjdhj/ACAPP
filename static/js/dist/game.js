@@ -191,6 +191,7 @@ class Particle extends AcGameObject {
 }
 class Player extends AcGameObject {
     constructor(playground, x, y, radius, color, speed, character, username, photo) {
+        console.log(character, username, photo);
         super();
         //把信息都存下来
         this.playground = playground;
@@ -205,10 +206,11 @@ class Player extends AcGameObject {
         this.move_length = 0;
         this.color = color;
         this.speed = speed;
+        this.radius = radius;
 
         this.photo = photo;
-        this.radius = radius;
-        this.uesrname = username
+        this.uesrname = username;
+        this.character = character;
         this.fireballs = [];
         this.cur_skill = null;
         //用于浮点数运算
@@ -476,8 +478,9 @@ class MultiPlayerSocket {
         this.ws.onmessage = function(e) {
             let data = JSON.parse(e.data);
             let uuid = data.uuid;
+           // console.log(uuid, this.uuid, outer.uuid);
             if (uuid === outer.uuid) return false;
-
+           
             let event = data.event;
             if (event === "create_player") {
                 outer.receive_create_player(uuid, data.username, data.photo);
@@ -497,7 +500,7 @@ class MultiPlayerSocket {
 
     send_create_player(username, photo) {
         let outer = this;
-        this.ws.send(JSON.stringify({
+        this.ws.send(JSON.stringify({//想后端发送json消息
             'event': "create_player",
             'uuid': outer.uuid,
             'username': username,
@@ -586,10 +589,12 @@ class AcGamePlayground {
         this.game_map = new GameMap(this);
 
         this.players = [];  // 存放当前游戏中的所有玩家
-        this.players.push(new Player(this, this.width / 2 / this.scale, 0.5, 0.05, "white", 0.15, true));
+        this.players.push(new Player(this, this.width/2/this.scale,0.5,0.05,"white",0.15, "me", this.root.settings.username, this.root.settings.photo));
+
+
         if (mode === "single mode") {
             for (let i = 0; i < 5; i ++) {//创建人机
-                this.players.push(new Player(this, this.width / 2 / this.scale, 0.5, 0.05, this.get_random_color(), 0.15,false));
+                this.players.push(new Player(this, this.width / 2 / this.scale, 0.5, 0.05, this.get_random_color(), 0.15, "robot"));
             }
         } else if (mode === "multi mode") {
             

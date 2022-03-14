@@ -1,5 +1,6 @@
 class Player extends AcGameObject {
     constructor(playground, x, y, radius, color, speed, character, username, photo) {
+        console.log(character, username, photo);
         super();
         //把信息都存下来
         this.playground = playground;
@@ -14,10 +15,11 @@ class Player extends AcGameObject {
         this.move_length = 0;
         this.color = color;
         this.speed = speed;
+        this.radius = radius;
 
         this.photo = photo;
-        this.radius = radius;
-        this.uesrname = username
+        this.uesrname = username;
+        this.character = character;
         this.fireballs = [];
         this.cur_skill = null;
         //用于浮点数运算

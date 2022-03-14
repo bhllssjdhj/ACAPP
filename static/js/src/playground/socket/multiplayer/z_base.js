@@ -13,8 +13,9 @@ class MultiPlayerSocket {
         this.ws.onmessage = function(e) {
             let data = JSON.parse(e.data);
             let uuid = data.uuid;
+           // console.log(uuid, this.uuid, outer.uuid);
             if (uuid === outer.uuid) return false;
-
+           
             let event = data.event;
             if (event === "create_player") {
                 outer.receive_create_player(uuid, data.username, data.photo);
@@ -34,7 +35,7 @@ class MultiPlayerSocket {
 
     send_create_player(username, photo) {
         let outer = this;
-        this.ws.send(JSON.stringify({
+        this.ws.send(JSON.stringify({//想后端发送json消息
             'event': "create_player",
             'uuid': outer.uuid,
             'username': username,
