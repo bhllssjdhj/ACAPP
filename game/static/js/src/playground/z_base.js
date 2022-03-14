@@ -13,6 +13,17 @@ class AcGamePlayground {
             outer.resize();
         });
     }
+
+    create_uuid() {
+        let res = "";
+        for (let i = 0; i < 8; i ++ ) {
+            let x = parseInt(Math.floor(Math.random() * 10));  // 返回[0, 1)之间的数
+            res += x;
+        }
+        return res;
+    }
+
+
     resize() {
         this.width = this.$playground.width();
         this.height = this.$playground.height();
@@ -31,6 +42,7 @@ class AcGamePlayground {
 
 
     show(mode) {    //打开 playground 界面
+        let outer = this;
         this.$playground.show();
         this.resize();
         this.height = this.$playground.height();
@@ -44,10 +56,11 @@ class AcGamePlayground {
                 this.players.push(new Player(this, this.width / 2 / this.scale, 0.5, 0.05, this.get_random_color(), 0.15,false));
             }
         } else if (mode === "multi mode") {
-            let outer = this;
+            
             this.mps = new MultiPlayerSocket(this);
+            this.mps.uuid = this.players[0].uuid;//将我们自己的uuid传进去
             this.mps.ws.onopen = function() {
-                outer.mps.send_create_player();
+                outer.mps.send_create_player(outer.root.settings.username, outer.root.settings.photo);//调用multiplayer中js的函数
             };
         }
     }

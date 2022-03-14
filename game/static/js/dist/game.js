@@ -68,6 +68,15 @@ class AcGameObject {
         this.has_called_start = false;  //是否执行过 start 函数
         this.timedelta = 0;             //当前帧距离上一帧的时间间隔
         // 该数据记录是为了后续计算速度等参数的
+        this.uuid = this.create_uuid();
+    }
+    create_uuid() {
+        let res = "";
+        for (let i = 0; i < 8; i ++ ) {
+            let x = parseInt(Math.floor(Math.random() * 10));   //[0, 10)
+            res += x;
+        }
+        return res;
     }
     start() {   //只会在第一帧执行一次
 
@@ -459,16 +468,72 @@ class MultiPlayerSocket {
         this.start();
     }
     start() {
+        this.receive();
     }
-    send_create_player() {
+    receive () {
+        let outer = this;
+
+        this.ws.onmessage = function(e) {
+            let data = JSON.parse(e.data);
+            let uuid = data.uuid;
+            if (uuid === outer.uuid) return false;
+
+            let event = data.event;
+            if (event === "create_player") {
+                outer.receive_create_player(uuid, data.username, data.photo);
+            } else if (event === "move_to") {
+                outer.receive_move_to(uuid, data.tx, data.ty);
+            } else if (event === "shoot_fireball") {
+                outer.receive_shoot_fireball(uuid, data.tx, data.ty, data.ball_uuid);
+            } else if (event === "attack") {
+                outer.receive_attack(uuid, data.attackee_uuid, data.x, data.y, data.angle, data.damage, data.ball_uuid);
+            } else if (event === "blink") {
+                outer.receive_blink(uuid, data.tx, data.ty);
+            } else if (event === "message") {
+                outer.receive_message(uuid, data.username, data.text);
+            }
+        };
+    }
+
+    send_create_player(username, photo) {
+        let outer = this;
         this.ws.send(JSON.stringify({
-            'message': 'hello acapp server',
+            'event': "create_player",
+            'uuid': outer.uuid,
+            'username': username,
+            'photo': photo,
         }));
     }
-    receive_create_player() {
-    }
-}
 
+    get_player(uuid) {
+        let players = this.playground.players;
+        for (let i = 0; i < players.length; i ++ ) {
+            let player = players[i];
+            if (player.uuid === uuid)
+                return player;
+        }
+
+        return null;
+    }
+
+    receive_create_player(uuid, username, photo) {
+        let player = new Player(
+            this.playground,
+            this.playground.width / 2 / this.playground.scale,
+            0.5,
+            0.05,
+            "white",
+            0.15,
+            "enemy",
+            username,
+            photo,
+        );
+
+        player.uuid = uuid;
+        this.playground.players.push(player);
+    }
+
+}
 class AcGamePlayground {
     constructor(root) {
         this.root = root;
@@ -484,6 +549,17 @@ class AcGamePlayground {
             outer.resize();
         });
     }
+
+    create_uuid() {
+        let res = "";
+        for (let i = 0; i < 8; i ++ ) {
+            let x = parseInt(Math.floor(Math.random() * 10));  // 返回[0, 1)之间的数
+            res += x;
+        }
+        return res;
+    }
+
+
     resize() {
         this.width = this.$playground.width();
         this.height = this.$playground.height();
@@ -502,6 +578,7 @@ class AcGamePlayground {
 
 
     show(mode) {    //打开 playground 界面
+        let outer = this;
         this.$playground.show();
         this.resize();
         this.height = this.$playground.height();
@@ -515,10 +592,11 @@ class AcGamePlayground {
                 this.players.push(new Player(this, this.width / 2 / this.scale, 0.5, 0.05, this.get_random_color(), 0.15,false));
             }
         } else if (mode === "multi mode") {
-            let outer = this;
+            
             this.mps = new MultiPlayerSocket(this);
+            this.mps.uuid = this.players[0].uuid;//将我们自己的uuid传进去
             this.mps.ws.onopen = function() {
-                outer.mps.send_create_player();
+                outer.mps.send_create_player(outer.root.settings.username, outer.root.settings.photo);//调用multiplayer中js的函数
             };
         }
     }
