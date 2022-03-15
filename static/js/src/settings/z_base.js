@@ -2,7 +2,7 @@ class Settings {
     constructor(root) {
         this.root = root;
         this.platform = "WEB";
-        if(this.root.AcWingOS == "ACAPP") this.platform = "ACAPP";
+        if(this.root.AcWingOS) this.platform = "ACAPP";
         this.username = "";
         this.photo = "";
 
@@ -229,15 +229,14 @@ class Settings {
 
     }
 
-    acapp_login() {
-        let outer = this
+    acapp_login(appid, redirect_uri, scope, state) {
+        let outer = this;
         this.root.AcWingOS.api.oauth2.authorize(appid,redirect_uri, scope, state, function(resp){
             if (resp.result === "success") {
                 outer.username = resp.username;
                 outer.photo = resp.photo;
                 outer.hide();
                 outer.root.menu.show();
-
             }
         });
     }

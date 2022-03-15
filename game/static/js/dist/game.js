@@ -191,7 +191,7 @@ class Particle extends AcGameObject {
 }
 class Player extends AcGameObject {
     constructor(playground, x, y, radius, color, speed, character, username, photo) {
-        console.log(character, username, photo);
+        //console.log(character, username, photo);
         super();
         //把信息都存下来
         this.playground = playground;
@@ -200,8 +200,8 @@ class Player extends AcGameObject {
         this.vx = 0;//初始x方向速度
         this.vy = 0;//初始y方向速度
         this.y = y;
-        this.damage_vx = 0;//
-        this.damage_vy = 0;//
+        this.damage_x = 0;//
+        this.damage_y = 0;//
         this.damage_speed = 0;//伤害迫使位移速度
         this.move_length = 0;
         this.color = color;
@@ -217,15 +217,16 @@ class Player extends AcGameObject {
         this.eps = 0.01;
         this.friction = 0.9;//伤害迫使位移速度 的衰减系数
         this.spent_time = 0;
+        this.cur_skill = null;
 
         if (this.character !== "robot"){
             this.img = new Image();//创建用户头像
-            this.img.src = this.playground.root.settings.photo;
+            this.img.src = this.photo;
         }
     }
 
     start() {
-        if (this.character !== "robot") {//如果是用户，加上监听函数
+        if (this.character === "me") {//如果是用户，加上监听函数
             this.add_listening_events();
         }
         else if (this.character === "robot") {//如果是bot，使其随机移动到一个位置
@@ -315,7 +316,9 @@ class Player extends AcGameObject {
             let move_length = this.radius * Math.random() * 10;
             new Particle(this.playground, x, y, radius, vx, vy, color, speed, move_length);
         }
-        if(this.radius < 10) {//当玩家半径小于10像素时，玩家死亡
+        this.radius -= damage;
+
+        if(this.radius < this.eps) {//当玩家半径小于10像素时，玩家死亡
             this.destroy();
             return false;
         }
@@ -327,11 +330,11 @@ class Player extends AcGameObject {
     }
 
     update() {
+        this.spent_time += this.timedelta / 1000;
         this.update_move();
         this.render();//render()函数必须放在update()内第一个执行，若将render放在if-else之后，更新每一帧时无法及时的将render()渲染出来，会使人物在受到攻击进行攻击判定时处于“隐身”状态。
     }
     update_move() {
-        this.spent_time += this.timedelta / 1000;//更新bot开局技能冷却时间
         if (this.character === "robot" && this.spent_time > 4 && Math.random() * 180 < 1) {//当五秒冷却时间过去,bot开始攻击
             let player = this.playground.players[Math.floor(Math.random() * this.playground.players.length)];
             let tx = player.x + player.speed * this.vx * this.timedelta / 1000 * 0.3;
@@ -344,8 +347,8 @@ class Player extends AcGameObject {
         if (this.damage_speed > this.eps) {//若此时仍处于被击退状态中
             this.vx = this.vy = 0;
             this.move_length = 0;
-            this.x += this.damage_speed * this.damage_vx * this.timedelta/1000;
-            this.y += this.damage_speed * this.damage_vy * this.timedelta/1000;
+            this.x += this.damage_speed * this.damage_x * this.timedelta/1000;
+            this.y += this.damage_speed * this.damage_y * this.timedelta/1000;
             this.damage_speed *= this.friction;//击退速度*摩擦系数，达到击退速度逐渐衰减的效果
 
         }
@@ -360,7 +363,7 @@ class Player extends AcGameObject {
                 }
             }
             else {
-                let moved = this.speed * this.timedelta / 1000;
+                let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000);
                 this.x += this.vx * moved;
                 this.y += this.vy * moved;
                 this.move_length -= moved;
@@ -390,6 +393,13 @@ class Player extends AcGameObject {
         }
     }
     on_destroy() {
+        for (let i = 0; i < this.playground.players.length; i ++ ) {
+            if (this.playground.players[i] === this) {
+                this.playground.players.splice(i, 1);
+                break;
+            }
+        }
+
 
 
     }
@@ -566,9 +576,9 @@ class AcGamePlayground {
     constructor(root) {
         this.root = root;
         this.$playground = $(`<div class = "ac_game_playground"></div>`);
-        this.root.$ac_game.append(this.$playground);
         this.hide();
-        
+        this.root.$ac_game.append(this.$playground);
+
         this.start();
     }
     start() {
@@ -608,11 +618,14 @@ class AcGamePlayground {
     show(mode) {    //打开 playground 界面
         let outer = this;
         this.$playground.show();
+
         this.resize();
         this.height = this.$playground.height();
         this.width = this.$playground.width();
         this.game_map = new GameMap(this);
         this.mode = mode;
+        this.resize();
+
         this.players = [];  // 存放当前游戏中的所有玩家
         this.players.push(new Player(this, this.width/2/this.scale,0.5,0.05,"white",0.15, "me", this.root.settings.username, this.root.settings.photo));
 
@@ -622,7 +635,7 @@ class AcGamePlayground {
                 this.players.push(new Player(this, this.width / 2 / this.scale, 0.5, 0.05, this.get_random_color(), 0.15, "robot"));
             }
         } else if (mode === "multi mode") {
-            
+
             this.mps = new MultiPlayerSocket(this);
             this.mps.uuid = this.players[0].uuid;//将我们自己的uuid传进去
             this.mps.ws.onopen = function() {
@@ -641,7 +654,7 @@ class Settings {
     constructor(root) {
         this.root = root;
         this.platform = "WEB";
-        if(this.root.AcWingOS == "ACAPP") this.platform = "ACAPP";
+        if(this.root.AcWingOS) this.platform = "ACAPP";
         this.username = "";
         this.photo = "";
 
@@ -868,15 +881,14 @@ class Settings {
 
     }
 
-    acapp_login() {
-        let outer = this
+    acapp_login(appid, redirect_uri, scope, state) {
+        let outer = this;
         this.root.AcWingOS.api.oauth2.authorize(appid,redirect_uri, scope, state, function(resp){
             if (resp.result === "success") {
                 outer.username = resp.username;
                 outer.photo = resp.photo;
                 outer.hide();
                 outer.root.menu.show();
-
             }
         });
     }

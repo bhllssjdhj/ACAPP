@@ -2,9 +2,9 @@ class AcGamePlayground {
     constructor(root) {
         this.root = root;
         this.$playground = $(`<div class = "ac_game_playground"></div>`);
-        this.root.$ac_game.append(this.$playground);
         this.hide();
-        
+        this.root.$ac_game.append(this.$playground);
+
         this.start();
     }
     start() {
@@ -44,11 +44,14 @@ class AcGamePlayground {
     show(mode) {    //打开 playground 界面
         let outer = this;
         this.$playground.show();
+
         this.resize();
         this.height = this.$playground.height();
         this.width = this.$playground.width();
         this.game_map = new GameMap(this);
         this.mode = mode;
+        this.resize();
+
         this.players = [];  // 存放当前游戏中的所有玩家
         this.players.push(new Player(this, this.width/2/this.scale,0.5,0.05,"white",0.15, "me", this.root.settings.username, this.root.settings.photo));
 
@@ -58,7 +61,7 @@ class AcGamePlayground {
                 this.players.push(new Player(this, this.width / 2 / this.scale, 0.5, 0.05, this.get_random_color(), 0.15, "robot"));
             }
         } else if (mode === "multi mode") {
-            
+
             this.mps = new MultiPlayerSocket(this);
             this.mps.uuid = this.players[0].uuid;//将我们自己的uuid传进去
             this.mps.ws.onopen = function() {
