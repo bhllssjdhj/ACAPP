@@ -48,7 +48,7 @@ class AcGamePlayground {
         this.height = this.$playground.height();
         this.width = this.$playground.width();
         this.game_map = new GameMap(this);
-
+        this.mode = mode;
         this.players = [];  // 存放当前游戏中的所有玩家
         this.players.push(new Player(this, this.width/2/this.scale,0.5,0.05,"white",0.15, "me", this.root.settings.username, this.root.settings.photo));
 

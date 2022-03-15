@@ -33,28 +33,30 @@ class MultiPlayerSocket {
         };
     }
 
-    send_create_player(username, photo) {
-        let outer = this;
-        this.ws.send(JSON.stringify({//想后端发送json消息
-            'event': "create_player",
-            'uuid': outer.uuid,
-            'username': username,
-            'photo': photo,
-        }));
-    }
+ 
 
-    get_player(uuid) {
+    get_player(uuid) {//通过uuid找player
         let players = this.playground.players;
         for (let i = 0; i < players.length; i ++ ) {
             let player = players[i];
             if (player.uuid === uuid)
                 return player;
         }
-
         return null;
     }
 
-    receive_create_player(uuid, username, photo) {
+    send_create_player(username, photo) {
+        let outer = this;
+        this.ws.send(JSON.stringify({//想后端发送json消息
+            'event': "create_player",//事件名
+            'uuid': outer.uuid,//动作发起者
+            'username': username,
+            'photo': photo,
+        }));
+
+    }
+
+    receive_create_player(uuid, username, photo) {//接收信息,uuid找到动作发出者
         let player = new Player(
             this.playground,
             this.playground.width / 2 / this.playground.scale,
@@ -71,4 +73,22 @@ class MultiPlayerSocket {
         this.playground.players.push(player);
     }
 
+    send_move_to(tx, ty) {
+        let outer = this;
+        this.ws.send(JSON.stringify({//想后端发送json消息
+            'event': "move_to",//事件名
+            'uuid': outer.uuid,//动作发起者
+            'tx' : tx,
+            'ty' : ty,
+        }));
+
+    }
+
+    receive_move_to(uuid, tx, ty) {//接收信息,uuid找到动作发出者
+        let player = this.get_player(uuid);
+        
+        if (player != null) {
+            player.move_to(tx, ty);
+        }
+    }
 }

@@ -1,3 +1,4 @@
+#后端路由函数
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 from django.conf import settings#import进来settings文件
@@ -44,15 +45,28 @@ class MultiPlayer(AsyncWebsocketConsumer):
         await self.channel_layer.group_send(
             self.room_name,
             {
-                'type': "group_create_player",  # 群发该消息后，作为客户端接受者，所接受用的函数名
+                'type': "group_send_event",  # 群发该消息后，作为客户端接受者，所接受用的函数名
                 'event': "create_player",
                 'uuid': data['uuid'],
                 'username': data['username'],
                 'photo': data['photo'],
             }
         )
-    async def group_create_player(self, data):
+    async def group_send_event(self, data):
         await self.send(text_data=json.dumps(data))
+
+    async def move_to (self, data) :
+
+        await self.channel_layer.group_send(
+            self.room_name,
+            {
+                'type': "group_send_event",  # 群发该消息后，作为客户端接受者，所接受用的函数名
+                'event': "move_to",
+                'uuid' :data['uuid'],
+                'tx' : data['tx'],
+                'ty' : data['ty'],
+                }
+            )
 
     async def receive(self, text_data):#前端向后端发送请求，发到该函数
         data = json.loads(text_data)
@@ -60,4 +74,6 @@ class MultiPlayer(AsyncWebsocketConsumer):
         event = data['event']
         if event == "create_player":
             await self.create_player(data)
+        elif event == "move_to" :
+            await self.move_to(data)
 

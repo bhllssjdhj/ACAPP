@@ -54,8 +54,13 @@ class Player extends AcGameObject {
             const rect = outer.ctx.canvas.getBoundingClientRect();
 
             if (e.which === 3) {//监听事件：按下鼠标右键
-                //调整偏移量，X - canvas左上角距离屏幕左边界的距离；Y - 距离屏幕顶端距离
-                outer.move_to((e.clientX - rect.left) / outer.playground.scale, (e.clientY - rect.top) / outer.playground.scale);
+                let tx = (e.clientX - rect.left) / outer.playground.scale;
+                let ty =  (e.clientY - rect.top) / outer.playground.scale;
+                outer.move_to (tx, ty);
+
+                if (outer.playground.mode === "multi mode") {
+                    outer.playground.mps.send_move_to(tx, ty);
+                }
             }
             else if (e.which === 1) {//监听事件：按下鼠标左键
                 if (outer.cur_skill === "fireball") {//若已经选中了火球技能

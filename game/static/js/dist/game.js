@@ -245,8 +245,13 @@ class Player extends AcGameObject {
             const rect = outer.ctx.canvas.getBoundingClientRect();
 
             if (e.which === 3) {//监听事件：按下鼠标右键
-                //调整偏移量，X - canvas左上角距离屏幕左边界的距离；Y - 距离屏幕顶端距离
-                outer.move_to((e.clientX - rect.left) / outer.playground.scale, (e.clientY - rect.top) / outer.playground.scale);
+                let tx = (e.clientX - rect.left) / outer.playground.scale;
+                let ty =  (e.clientY - rect.top) / outer.playground.scale;
+                outer.move_to (tx, ty);
+
+                if (outer.playground.mode === "multi mode") {
+                    outer.playground.mps.send_move_to(tx, ty);
+                }
             }
             else if (e.which === 1) {//监听事件：按下鼠标左键
                 if (outer.cur_skill === "fireball") {//若已经选中了火球技能
@@ -498,28 +503,30 @@ class MultiPlayerSocket {
         };
     }
 
-    send_create_player(username, photo) {
-        let outer = this;
-        this.ws.send(JSON.stringify({//想后端发送json消息
-            'event': "create_player",
-            'uuid': outer.uuid,
-            'username': username,
-            'photo': photo,
-        }));
-    }
+ 
 
-    get_player(uuid) {
+    get_player(uuid) {//通过uuid找player
         let players = this.playground.players;
         for (let i = 0; i < players.length; i ++ ) {
             let player = players[i];
             if (player.uuid === uuid)
                 return player;
         }
-
         return null;
     }
 
-    receive_create_player(uuid, username, photo) {
+    send_create_player(username, photo) {
+        let outer = this;
+        this.ws.send(JSON.stringify({//想后端发送json消息
+            'event': "create_player",//事件名
+            'uuid': outer.uuid,//动作发起者
+            'username': username,
+            'photo': photo,
+        }));
+
+    }
+
+    receive_create_player(uuid, username, photo) {//接收信息,uuid找到动作发出者
         let player = new Player(
             this.playground,
             this.playground.width / 2 / this.playground.scale,
@@ -536,6 +543,24 @@ class MultiPlayerSocket {
         this.playground.players.push(player);
     }
 
+    send_move_to(tx, ty) {
+        let outer = this;
+        this.ws.send(JSON.stringify({//想后端发送json消息
+            'event': "move_to",//事件名
+            'uuid': outer.uuid,//动作发起者
+            'tx' : tx,
+            'ty' : ty,
+        }));
+
+    }
+
+    receive_move_to(uuid, tx, ty) {//接收信息,uuid找到动作发出者
+        let player = this.get_player(uuid);
+        
+        if (player != null) {
+            player.move_to(tx, ty);
+        }
+    }
 }
 class AcGamePlayground {
     constructor(root) {
@@ -587,7 +612,7 @@ class AcGamePlayground {
         this.height = this.$playground.height();
         this.width = this.$playground.width();
         this.game_map = new GameMap(this);
-
+        this.mode = mode;
         this.players = [];  // 存放当前游戏中的所有玩家
         this.players.push(new Player(this, this.width/2/this.scale,0.5,0.05,"white",0.15, "me", this.root.settings.username, this.root.settings.photo));
 
