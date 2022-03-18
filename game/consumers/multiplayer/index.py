@@ -52,21 +52,49 @@ class MultiPlayer(AsyncWebsocketConsumer):
                 'photo': data['photo'],
             }
         )
-    async def group_send_event(self, data):
-        await self.send(text_data=json.dumps(data))
 
-    async def move_to (self, data) :
-
+    async def move_to (self, data):
         await self.channel_layer.group_send(
             self.room_name,
             {
-                'type': "group_send_event",  # 群发该消息后，作为客户端接受者，所接受用的函数名
+                'type': "group_send_event",
                 'event': "move_to",
-                'uuid' :data['uuid'],
+                'uuid' :data['uuid'],#动作发出对象
                 'tx' : data['tx'],
                 'ty' : data['ty'],
                 }
             )
+    async def shoot_fireball (self, data) :
+        await self.channel_layer.group_send(
+            self.room_name,
+            {
+                'type': "group_send_event",
+                'event': "shoot_fireball",
+                'uuid': data['uuid'],
+                'tx': data['tx'],
+                'ty': data['ty'],
+                'ball_uuid': data['ball_uuid'],
+            }
+        )
+
+    async def attack(self, data):
+        await self.channel_layer.group_send(
+            self.room_name,
+            {
+                'type' : "group_send_event",
+                'event': "attack",
+                'uuid': data['uuid'],
+                'attackee_uuid' : data['attackee_uuid'],
+                'x': data['x'],
+                'y': data['y'],
+                'angle': data['angle'],
+                'damage': data['damage'],
+                'ball_uuid': data['ball_uuid'],
+            }
+        )
+
+    async def group_send_event(self, data):#群发消息函数
+        await self.send(text_data=json.dumps(data))
 
     async def receive(self, text_data):#前端向后端发送请求，发到该函数
         data = json.loads(text_data)
@@ -76,4 +104,8 @@ class MultiPlayer(AsyncWebsocketConsumer):
             await self.create_player(data)
         elif event == "move_to" :
             await self.move_to(data)
+        elif event == "shoot_fireball" :
+            await self.shoot_fireball(data)
+        elif event == "attack":
+            await self.attack(data)
 

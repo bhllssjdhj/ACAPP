@@ -15,26 +15,36 @@ class FireBall extends AcGameObject {
         this.damage = damage;
         this.eps = 0.1;
     }
-    start() {
-    }
-    update() {
 
-        
+    start() {
+
+    }
+
+    update() {
         if (this.move_length < this.eps) {
             this.destroy();
             return false;
         }
-        else {//更新(x,y)坐标
-            let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000);
-            this.x += this.vx * moved;
-            this.y += this.vy * moved;
-            this.move_length -= moved;
+        this.update_move();
+        if (this.player.character !== "enemy") {
+            this.update_attack();  
         }
         this.render();
+    }
+
+    update_move() {
+        let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000);
+        this.x += this.vx * moved;
+        this.y += this.vy * moved;
+        this.move_length -= moved;
+    }
+
+    update_attack() {
         for (let i = 0; i < this.playground.players.length; i ++) {
             let player = this.playground.players[i];
-            if (player !== this.player && this.is_collision(player)) {
+            if (this.player !== player && this.is_collision(player)) {//当这名玩家被击中时，执行attack函数
                 this.attack(player);
+                break;
             }
         }
     }
@@ -52,7 +62,7 @@ class FireBall extends AcGameObject {
         let dy = y2 - y1;
         return Math.sqrt(dx * dx + dy * dy);
     }
-    
+
     is_collision(player) {//判断该火球是否击中玩家player（传入的参数）
         let distance = this.get_dist(this.x, this.y, player.x, player.y);
         if (distance < (this.radius + player.radius)) {
@@ -60,14 +70,24 @@ class FireBall extends AcGameObject {
         }
         return false;
     }
+
     attack(player) {//火球命中，执行1.造成伤害2.击退player
         let angle = Math.atan2(player.y - this.y, player.x - this.x);
         player.is_attacked(angle, this.damage);//对玩家的操作，应在player类中完成
+        if (this.playground.mode === "multi mode") {
+            //console.log(this.playground.mode);
+            this.playground.mps.send_attack(player.uuid, player.x, player.y, angle, this.damage, this.uuid);//传入被击中者的uuid和球的uuid以及必要的参数
+        }
         this.destroy();//继承自父类
     }
+
     on_destroy() {
-
+        let fireballs = this.player.fireballs;
+        for (let i = 0; i < fireballs.length; i ++ ) {
+            if (fireballs[i] === this) {
+                fireballs.splice(i, 1);
+                break;
+            }
+        }
     }
-
-
 }

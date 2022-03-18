@@ -152,7 +152,7 @@ class Particle extends AcGameObject {
     constructor(playground, x, y, radius, vx, vy, color, speed, move_length) {
         super();
         this.playground = playground;
-        this.ctx = playground.game_map.ctx;
+        this.ctx = this.playground.game_map.ctx;
         this.x = x;
         this.y = y;
         this.radius = radius;
@@ -160,35 +160,38 @@ class Particle extends AcGameObject {
         this.vy = vy;
         this.color = color;
         this.speed = speed;
-        this.friction = 0.9;
         this.move_length = move_length;
-        this.eps = 10;
+        this.friction = 0.9;
+        this.eps = 0.01;
     }
+
     start() {
     }
+
     update() {
         if (this.move_length < this.eps || this.speed < this.eps) {
             this.destroy();
             return false;
-
         }
-        let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000)
+
+        let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000);
         this.x += this.vx * moved;
         this.y += this.vy * moved;
         this.speed *= this.friction;
         this.move_length -= moved;
         this.render();
-
     }
+
     render() {
         let scale = this.playground.scale;
+
         this.ctx.beginPath();
-        this.ctx.arc(this.x * scale, this.y * scale, Math.ceil(this.radius) * scale, 0, 2 * Math.PI, false);
+        this.ctx.arc(this.x * scale, this.y * scale, this.radius * scale, 0, Math.PI * 2, false);
         this.ctx.fillStyle = this.color;
         this.ctx.fill();
     }
-
 }
+
 class Player extends AcGameObject {
     constructor(playground, x, y, radius, color, speed, character, username, photo) {
         //console.log(character, username, photo);
@@ -211,9 +214,9 @@ class Player extends AcGameObject {
         this.photo = photo;
         this.uesrname = username;
         this.character = character;
-        this.fireballs = [];
+        this.fireballs = [];//用一个数组来存一个玩家发射的所有火球，以便于子弹消失时，将他们找出并对应删掉
         this.cur_skill = null;
-        //用于浮点数运算
+
         this.eps = 0.01;
         this.friction = 0.9;//伤害迫使位移速度 的衰减系数
         this.spent_time = 0;
@@ -255,13 +258,15 @@ class Player extends AcGameObject {
                 }
             }
             else if (e.which === 1) {//监听事件：按下鼠标左键
-                if (outer.cur_skill === "fireball") {//若已经选中了火球技能
-                    outer.shoot_fireball((e.clientX - rect.left)/outer.playground.scale , (e.clientY - rect.top) / outer.playground.scale);
+                let tx = (e.clientX - rect.left)/outer.playground.scale;
+                let ty = (e.clientY - rect.top) / outer.playground.scale;
+                if (outer.cur_skill === "fireball") {
+                    let fireball = outer.shoot_fireball(tx, ty);
+                    if (outer.playground.mode === "multi mode") {
+                        outer.playground.mps.send_shoot_fireball(tx, ty, fireball.uuid);
+                    }
                 }
-
             }
-
-
             outer.cur_skill = null;//清空当前技能
         });
 
@@ -280,12 +285,23 @@ class Player extends AcGameObject {
         let vx = Math.cos(angle),vy = Math.sin(angle);
         let color = "orange";
         let speed =  0.5;
-        //let move_length = Math.sqrt((ty - this.y) * (ty - this.y) + (tx - this.x) * (tx - this.x)) / this.playground.scale;//实现走A，指哪打哪
+        //let move_length = Math.sqrt((ty - y) * (ty - y) + (tx - x) * (tx - x)) / this.playground.scale;//实现走A，指哪打哪
         let move_length = 1.0;
         let damage = 0.01;
-        new FireBall(this.playground, this, x, y, radius, vx, vy, color, speed, move_length, damage);
+        let fireball = new FireBall(this.playground, this, x, y, radius, vx, vy, color, speed, move_length, damage);
+        this.fireballs.push(fireball);
+        return fireball;
     }
 
+    destroy_fireball(uuid) {
+        for (let i = 0; i < this.fireballs.length; i ++ ) {
+            let fireball = this.fireballs[i];
+            if (fireball.uuid === uuid) {
+                fireball.destroy();
+                break;
+            }
+        }
+    }
 
     get_dist(x1, y1, x2, y2) {
         let dx = x1 - x2;
@@ -302,7 +318,6 @@ class Player extends AcGameObject {
 
     is_attacked(angle, damage) {
         this.radius -= damage;
-
         //粒子小球效果
         for (let i = 0; i < 15 + Math.random() * 10; i ++) {
             let x = this.x;
@@ -317,16 +332,22 @@ class Player extends AcGameObject {
             new Particle(this.playground, x, y, radius, vx, vy, color, speed, move_length);
         }
         this.radius -= damage;
-
         if(this.radius < this.eps) {//当玩家半径小于10像素时，玩家死亡
             this.destroy();
             return false;
         }
         //击退效果
-        this.damage_vx = Math.cos(angle);
-        this.damage_vy = Math.sin(angle);
+        this.damage_x = Math.cos(angle);
+        this.damage_y = Math.sin(angle);
         this.damage_speed = damage * 100;
         this.speed *= 1.2;
+    }
+    
+    receive_attack(x, y, angle, damage, ball_uuid, attacker) {//更新被攻击者
+        attacker.destroy_fireball(ball_uuid);
+        this.x = x;
+        this.y = y;
+        this.is_attacked(angle, damage);
     }
 
     update() {
@@ -334,6 +355,7 @@ class Player extends AcGameObject {
         this.update_move();
         this.render();//render()函数必须放在update()内第一个执行，若将render放在if-else之后，更新每一帧时无法及时的将render()渲染出来，会使人物在受到攻击进行攻击判定时处于“隐身”状态。
     }
+
     update_move() {
         if (this.character === "robot" && this.spent_time > 4 && Math.random() * 180 < 1) {//当五秒冷却时间过去,bot开始攻击
             let player = this.playground.players[Math.floor(Math.random() * this.playground.players.length)];
@@ -368,11 +390,8 @@ class Player extends AcGameObject {
                 this.y += this.vy * moved;
                 this.move_length -= moved;
             }
-
-
         }
     }
-
 
     render() {  //渲染一个圆
         let scale = this.playground.scale;
@@ -392,6 +411,7 @@ class Player extends AcGameObject {
             this.ctx.fill();
         }
     }
+
     on_destroy() {
         for (let i = 0; i < this.playground.players.length; i ++ ) {
             if (this.playground.players[i] === this) {
@@ -399,9 +419,6 @@ class Player extends AcGameObject {
                 break;
             }
         }
-
-
-
     }
 }
 
@@ -422,26 +439,36 @@ class FireBall extends AcGameObject {
         this.damage = damage;
         this.eps = 0.1;
     }
-    start() {
-    }
-    update() {
 
-        
+    start() {
+
+    }
+
+    update() {
         if (this.move_length < this.eps) {
             this.destroy();
             return false;
         }
-        else {//更新(x,y)坐标
-            let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000);
-            this.x += this.vx * moved;
-            this.y += this.vy * moved;
-            this.move_length -= moved;
+        this.update_move();
+        if (this.player.character !== "enemy") {
+            this.update_attack();  
         }
         this.render();
+    }
+
+    update_move() {
+        let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000);
+        this.x += this.vx * moved;
+        this.y += this.vy * moved;
+        this.move_length -= moved;
+    }
+
+    update_attack() {
         for (let i = 0; i < this.playground.players.length; i ++) {
             let player = this.playground.players[i];
-            if (player !== this.player && this.is_collision(player)) {
+            if (this.player !== player && this.is_collision(player)) {//当这名玩家被击中时，执行attack函数
                 this.attack(player);
+                break;
             }
         }
     }
@@ -459,7 +486,7 @@ class FireBall extends AcGameObject {
         let dy = y2 - y1;
         return Math.sqrt(dx * dx + dy * dy);
     }
-    
+
     is_collision(player) {//判断该火球是否击中玩家player（传入的参数）
         let distance = this.get_dist(this.x, this.y, player.x, player.y);
         if (distance < (this.radius + player.radius)) {
@@ -467,16 +494,26 @@ class FireBall extends AcGameObject {
         }
         return false;
     }
+
     attack(player) {//火球命中，执行1.造成伤害2.击退player
         let angle = Math.atan2(player.y - this.y, player.x - this.x);
         player.is_attacked(angle, this.damage);//对玩家的操作，应在player类中完成
+        if (this.playground.mode === "multi mode") {
+            //console.log(this.playground.mode);
+            this.playground.mps.send_attack(player.uuid, player.x, player.y, angle, this.damage, this.uuid);//传入被击中者的uuid和球的uuid以及必要的参数
+        }
         this.destroy();//继承自父类
     }
+
     on_destroy() {
-
+        let fireballs = this.player.fireballs;
+        for (let i = 0; i < fireballs.length; i ++ ) {
+            if (fireballs[i] === this) {
+                fireballs.splice(i, 1);
+                break;
+            }
+        }
     }
-
-
 }
 class MultiPlayerSocket {
     constructor(playground) {
@@ -495,7 +532,6 @@ class MultiPlayerSocket {
             let uuid = data.uuid;
            // console.log(uuid, this.uuid, outer.uuid);
             if (uuid === outer.uuid) return false;
-           
             let event = data.event;
             if (event === "create_player") {
                 outer.receive_create_player(uuid, data.username, data.photo);
@@ -548,27 +584,65 @@ class MultiPlayerSocket {
             username,
             photo,
         );
-
         player.uuid = uuid;
         this.playground.players.push(player);
     }
 
     send_move_to(tx, ty) {
         let outer = this;
-        this.ws.send(JSON.stringify({//想后端发送json消息
+        this.ws.send(JSON.stringify({//向后端发送json消息
             'event': "move_to",//事件名
             'uuid': outer.uuid,//动作发起者
             'tx' : tx,
             'ty' : ty,
         }));
-
     }
 
     receive_move_to(uuid, tx, ty) {//接收信息,uuid找到动作发出者
         let player = this.get_player(uuid);
-        
-        if (player != null) {
+        if (player) {
             player.move_to(tx, ty);
+        }
+    }
+
+    send_shoot_fireball(tx, ty, ball_uuid) {
+        let outer = this;
+        this.ws.send(JSON.stringify({
+            'event': "shoot_fireball",//事件名
+            'uuid': outer.uuid,//攻击者
+            'tx' : tx,
+            'ty' : ty,
+            'ball_uuid' : ball_uuid,//球的uuid
+        }));
+    }
+
+    receive_shoot_fireball(uuid, tx, ty, ball_uuid) {//uuid找到动作发出者
+        let player = this.get_player(uuid);
+        if (player) {
+            let fireball = player.shoot_fireball(tx, ty);
+            fireball.uuid = ball_uuid;
+        }
+    }
+
+    send_attack (attackee_uuid, x, y, angle, damage, ball_uuid) {
+        let outer = this;
+        this.ws.send(JSON.stringify({
+            'event' : "attack",
+            'uuid' : outer.uuid,
+            'attackee_uuid' : attackee_uuid,
+            'x' : x,
+            'y' : y,
+            'angle' : angle,
+            'damage': damage,
+            'ball_uuid': ball_uuid,
+        }));
+    }
+
+    receive_attack(uuid, attackee_uuid, x, y, angle, damage, ball_uuid) {
+        let attacker = this.get_player(uuid);
+        let attackee = this.get_player(attackee_uuid);
+        if (attacker && attackee) {
+            attackee.receive_attack(x, y, angle, damage, ball_uuid, attacker);
         }
     }
 }

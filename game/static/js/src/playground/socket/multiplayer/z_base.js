@@ -15,7 +15,6 @@ class MultiPlayerSocket {
             let uuid = data.uuid;
            // console.log(uuid, this.uuid, outer.uuid);
             if (uuid === outer.uuid) return false;
-           
             let event = data.event;
             if (event === "create_player") {
                 outer.receive_create_player(uuid, data.username, data.photo);
@@ -68,27 +67,65 @@ class MultiPlayerSocket {
             username,
             photo,
         );
-
         player.uuid = uuid;
         this.playground.players.push(player);
     }
 
     send_move_to(tx, ty) {
         let outer = this;
-        this.ws.send(JSON.stringify({//想后端发送json消息
+        this.ws.send(JSON.stringify({//向后端发送json消息
             'event': "move_to",//事件名
             'uuid': outer.uuid,//动作发起者
             'tx' : tx,
             'ty' : ty,
         }));
-
     }
 
     receive_move_to(uuid, tx, ty) {//接收信息,uuid找到动作发出者
         let player = this.get_player(uuid);
-        
-        if (player != null) {
+        if (player) {
             player.move_to(tx, ty);
+        }
+    }
+
+    send_shoot_fireball(tx, ty, ball_uuid) {
+        let outer = this;
+        this.ws.send(JSON.stringify({
+            'event': "shoot_fireball",//事件名
+            'uuid': outer.uuid,//攻击者
+            'tx' : tx,
+            'ty' : ty,
+            'ball_uuid' : ball_uuid,//球的uuid
+        }));
+    }
+
+    receive_shoot_fireball(uuid, tx, ty, ball_uuid) {//uuid找到动作发出者
+        let player = this.get_player(uuid);
+        if (player) {
+            let fireball = player.shoot_fireball(tx, ty);
+            fireball.uuid = ball_uuid;
+        }
+    }
+
+    send_attack (attackee_uuid, x, y, angle, damage, ball_uuid) {
+        let outer = this;
+        this.ws.send(JSON.stringify({
+            'event' : "attack",
+            'uuid' : outer.uuid,
+            'attackee_uuid' : attackee_uuid,
+            'x' : x,
+            'y' : y,
+            'angle' : angle,
+            'damage': damage,
+            'ball_uuid': ball_uuid,
+        }));
+    }
+
+    receive_attack(uuid, attackee_uuid, x, y, angle, damage, ball_uuid) {
+        let attacker = this.get_player(uuid);
+        let attackee = this.get_player(attackee_uuid);
+        if (attacker && attackee) {
+            attackee.receive_attack(x, y, angle, damage, ball_uuid, attacker);
         }
     }
 }
