@@ -93,6 +93,30 @@ class MultiPlayer(AsyncWebsocketConsumer):
             }
         )
 
+    async def blink(self, data) :
+        await self.channel_layer.group_send(
+            self.room_name,
+            {
+                'type' : "group_send_event",
+                'event' : "blink",
+                'uuid' : data['uuid'],
+                'tx' : data['tx'],
+                'ty' : data['ty'],
+            }
+        )
+
+    async def message(self, data):
+        await self.channel_layer.group_send(
+            self.room_name,
+            {
+                'type' : "group_send_event",
+                'event' : "message",
+                'uuid' : data['uuid'],
+                'username' : data['username'],
+                'text' : data['text'],
+            }
+        )
+
     async def group_send_event(self, data):#群发消息函数
         await self.send(text_data=json.dumps(data))
 
@@ -108,4 +132,6 @@ class MultiPlayer(AsyncWebsocketConsumer):
             await self.shoot_fireball(data)
         elif event == "attack":
             await self.attack(data)
+        elif event == "message" :
+            await self.message(data)
 

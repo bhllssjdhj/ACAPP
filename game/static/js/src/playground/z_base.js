@@ -54,13 +54,17 @@ class AcGamePlayground {
 
         this.players = [];  // 存放当前游戏中的所有玩家
         this.players.push(new Player(this, this.width/2/this.scale,0.5,0.05,"white",0.15, "me", this.root.settings.username, this.root.settings.photo));
-
+        
+        this.state = "waiting";//实现状态机：等待，战斗，结束
+        this.notice_board = new NoticeBoard(this);
+        this.player_count = 0;
 
         if (mode === "single mode") {
             for (let i = 0; i < 5; i ++) {//创建人机
                 this.players.push(new Player(this, this.width / 2 / this.scale, 0.5, 0.05, this.get_random_color(), 0.15, "robot"));
             }
         } else if (mode === "multi mode") {
+            this.chat_field = new ChatField(this);
 
             this.mps = new MultiPlayerSocket(this);
             this.mps.uuid = this.players[0].uuid;//将我们自己的uuid传进去

@@ -75,7 +75,6 @@ class FireBall extends AcGameObject {
         let angle = Math.atan2(player.y - this.y, player.x - this.x);
         player.is_attacked(angle, this.damage);//对玩家的操作，应在player类中完成
         if (this.playground.mode === "multi mode") {
-            //console.log(this.playground.mode);
             this.playground.mps.send_attack(player.uuid, player.x, player.y, angle, this.damage, this.uuid);//传入被击中者的uuid和球的uuid以及必要的参数
         }
         this.destroy();//继承自父类
