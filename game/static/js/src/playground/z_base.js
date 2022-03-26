@@ -58,6 +58,7 @@ class AcGamePlayground {
         this.state = "waiting";//实现状态机：等待，战斗，结束
         this.notice_board = new NoticeBoard(this);
         this.player_count = 0;
+        this.score_board = new ScoreBoard(this);
 
         if (mode === "single mode") {
             for (let i = 0; i < 5; i ++) {//创建人机
@@ -74,9 +75,24 @@ class AcGamePlayground {
         }
     }
 
-    hide() {    //关闭 playground
+   hide() {
+        //清空所有游戏元素
+        while (this.players && this.players.length > 0) {
+            this.players[0].destroy();
+        }
+        if (this.game_map) {
+            this.game_map.destroy();
+            this.game_map = null;
+        }
+        if (this.notice_board) {
+            this.notice_board.destroy();
+            this.notice_board = null;
+        }
+        if (this.score_board) {
+            this.score_board.destroy();
+            this.score_board = null;
+        }
+        this.$playground.empty();   //清空所有html标签
         this.$playground.hide();
     }
-
-
 }

@@ -355,7 +355,7 @@ class Player extends AcGameObject {
         if (this.character === "me") {
             if (this.playground.state === "fighting") {
                 this.playground.state = "over";
-                //this.playground.score_board.lose();
+                this.playground.score_board.lose();
             }
         }
         for (let i = 0; i < this.playground.players.length; i ++ ) {

@@ -87,6 +87,9 @@ class AcGameObject {
     on_destroy() {  //在被销毁前执行一次
 
     }
+    late_update() {  // 在每一帧的最后执行一次
+    }
+
     destroy() { //删掉该物体
         this.on_destroy();  //删掉该物体前，执行删前的操作
 
@@ -110,9 +113,15 @@ let AC_GAME_ANIMATION = function(timestamp) {  // 回调函数，实现：每一
         }
         else {  //执行过初始帧，就执行每一帧的任务
             obj.timedelta = timestamp - last_timestamp;
-            obj.update();
+            obj.update();//执行每个类对象的update函数，相当于每一帧渲染一次该对象。
         }
     }
+
+    for (let i = 0; i < AC_GAME_OBJECTS.length; i ++ ) {
+        let obj = AC_GAME_OBJECTS[i];
+        obj.late_update();
+    }
+
     last_timestamp = timestamp; //更新最后一次时间戳
     requestAnimationFrame(AC_GAME_ANIMATION);
 }
@@ -656,7 +665,7 @@ class Player extends AcGameObject {
         if (this.character === "me") {
             if (this.playground.state === "fighting") {
                 this.playground.state = "over";
-                //this.playground.score_board.lose();
+                this.playground.score_board.lose();
             }
         }
         for (let i = 0; i < this.playground.players.length; i ++ ) {
@@ -664,6 +673,66 @@ class Player extends AcGameObject {
                 this.playground.players.splice(i, 1);
                 break;
             }
+        }
+    }
+}
+
+class ScoreBoard extends AcGameObject {
+    constructor(playground) {
+        super();
+        this.playground = playground;
+        this.ctx = this.playground.game_map.ctx;
+
+        this.state = null;  // win: 胜利，lose：失败
+
+        this.win_img = new Image();
+        this.win_img.src = "https://cdn.acwing.com/media/article/image/2021/12/17/1_8f58341a5e-win.png";
+
+        this.lose_img = new Image();
+        this.lose_img.src = "https://cdn.acwing.com/media/article/image/2021/12/17/1_9254b5f95e-lose.png";
+    }
+
+    start() {
+    }
+
+    add_listening_events() {
+        let outer = this;
+        let $canvas = this.playground.game_map.$canvas;
+
+        $canvas.on('click', function() {
+            outer.playground.hide();
+            outer.playground.root.menu.show();
+        });
+    }
+
+    win() {
+        this.state = "win";
+
+        let outer = this;
+        setTimeout(function() {
+            outer.add_listening_events();
+        }, 1000);
+    }
+
+    lose() {
+        this.state = "lose";
+
+        let outer = this;
+        setTimeout(function() {
+            outer.add_listening_events();
+        }, 1000);
+    }
+
+    late_update() {
+        this.render();
+    }
+
+    render() {
+        let len = this.playground.height / 2;
+        if (this.state === "win") {
+            this.ctx.drawImage(this.win_img, this.playground.width / 2 - len / 2, this.playground.height / 2 - len / 2, len, len);
+        } else if (this.state === "lose") {
+            this.ctx.drawImage(this.lose_img, this.playground.width / 2 - len / 2, this.playground.height / 2 - len / 2, len, len);
         }
     }
 }
@@ -983,6 +1052,7 @@ class AcGamePlayground {
         this.state = "waiting";//实现状态机：等待，战斗，结束
         this.notice_board = new NoticeBoard(this);
         this.player_count = 0;
+        this.score_board = new ScoreBoard(this);
 
         if (mode === "single mode") {
             for (let i = 0; i < 5; i ++) {//创建人机
@@ -999,11 +1069,26 @@ class AcGamePlayground {
         }
     }
 
-    hide() {    //关闭 playground
+   hide() {
+        //清空所有游戏元素
+        while (this.players && this.players.length > 0) {
+            this.players[0].destroy();
+        }
+        if (this.game_map) {
+            this.game_map.destroy();
+            this.game_map = null;
+        }
+        if (this.notice_board) {
+            this.notice_board.destroy();
+            this.notice_board = null;
+        }
+        if (this.score_board) {
+            this.score_board.destroy();
+            this.score_board = null;
+        }
+        this.$playground.empty();   //清空所有html标签
         this.$playground.hide();
     }
-
-
 }
 class Settings {
     constructor(root) {

@@ -26,6 +26,9 @@ class AcGameObject {
     on_destroy() {  //在被销毁前执行一次
 
     }
+    late_update() {  // 在每一帧的最后执行一次
+    }
+
     destroy() { //删掉该物体
         this.on_destroy();  //删掉该物体前，执行删前的操作
 
@@ -49,9 +52,15 @@ let AC_GAME_ANIMATION = function(timestamp) {  // 回调函数，实现：每一
         }
         else {  //执行过初始帧，就执行每一帧的任务
             obj.timedelta = timestamp - last_timestamp;
-            obj.update();
+            obj.update();//执行每个类对象的update函数，相当于每一帧渲染一次该对象。
         }
     }
+
+    for (let i = 0; i < AC_GAME_OBJECTS.length; i ++ ) {
+        let obj = AC_GAME_OBJECTS[i];
+        obj.late_update();
+    }
+
     last_timestamp = timestamp; //更新最后一次时间戳
     requestAnimationFrame(AC_GAME_ANIMATION);
 }
