@@ -1,7 +1,7 @@
 # wzc的游戏项目
 ### 游戏网址
-* The game website is : [fighting ball](https://app1660.acapp.acwing.com.cn/) 
-* welcome palying and commit any question about the game!
+* 请点击 : [fighting ball](https://app1660.acapp.acwing.com.cn/) 
+* 欢迎提出任何您认为有价值的建议！
 ### 操作指南：
 * 鼠标右键：控制移动。
 * 'q'+鼠标左键：向鼠标指向位置发射火球，并造成20伤害。
